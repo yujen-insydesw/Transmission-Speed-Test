@@ -29,6 +29,10 @@ Send 1048576 bytes
 ```
 client side
 ```console
+# can set server ip
+$ ./client_side <server_IP>
+
+# default connect to 127.0.0.1
 $ ./client_side 
 
 Average latency (micro second): 37.00
