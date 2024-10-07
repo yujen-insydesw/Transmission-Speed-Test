@@ -33,9 +33,15 @@ void *requestServer(void *arg) {
     }
         
     // Handle download from server
+    if ( false == recvFile(clientSocket) ) {
+        pthread_exit(NULL);
+    }
     
     // Receive download speed
     double downloadSpeed = 0.0;
+    if ( recv(clientSocket, &downloadSpeed, 8, 0) < 0 ) {
+        pthread_exit(NULL);
+    }
 
     // Close socket
     close(clientSocket);

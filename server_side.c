@@ -35,8 +35,13 @@ void *handleClient(void *arg) {
     }
         
     // Proceed download to client
-    
+    double downloadSpeed = 0.0;
+    if ( false == sendFile(clientSocket, &downloadSpeed) ) {
+        pthread_exit(NULL);
+    }
+
     // Send download speed
+    send(clientSocket, &downloadSpeed, 8, 0); // size 8 because double is 8 bytes
 
     pthread_exit(NULL);
 }
