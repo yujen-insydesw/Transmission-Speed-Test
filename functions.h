@@ -106,3 +106,96 @@ bool pingResponse(const int clientSocket) {
     }
     return true;
 }
+
+// Caculate transfer speed
+// input: (bytes , micro second)
+// output: bits/second
+// = (input bytes) * 8.0 * 1/1000,000 / ((duration micro second) * 1/1000,000)
+// = (inout Mega bits) / (second)
+const double calculateTransferSpeed(const double totalDataTransferred, const double totalTimeTaken) {
+    if (totalTimeTaken > 0) {
+        return totalDataTransferred * 8.0 / totalTimeTaken;
+    } else {
+        perror("Error: total time taken must be greater than zero\n");
+        return 0.0;
+    }
+}
+
+// Send data (or file) and Caculate speed
+bool sendFile(const int clientSocket, double* speed) {
+    // Prepare data
+    char* buffer = (char*)malloc(DATA_SIZE);
+    memset(buffer, 'A', DATA_SIZE);
+
+    struct timeval start;
+    gettimeofday(&start, NULL);
+
+    // Send data (tripple round for averaging the performance)
+    ssize_t bytesSend = 0;
+    bytesSend += send(clientSocket, buffer, DATA_SIZE, 0);
+    bytesSend += send(clientSocket, buffer, DATA_SIZE, 0);
+    bytesSend += send(clientSocket, buffer, DATA_SIZE, 0);
+    send(clientSocket, "V", 1, 0);
+    if (bytesSend < 0) {
+        parseErrno();
+        return false;
+    }
+
+    printf("Send %zd bytes\n\n", bytesSend);
+
+    // Wait for ASK
+    char* ack_buffer = (char*)malloc(4);
+    if ( recv(clientSocket, ack_buffer, 4, 0) < 0 ) {
+        parseErrno();
+        return false;
+    }
+    ack_buffer[3] = '\0';
+
+    struct timeval end;
+    gettimeofday(&end, NULL);
+
+    // Caculate speed
+    long unsigned duration = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+    *speed = calculateTransferSpeed(bytesSend, duration);
+    /*
+    printf("Total time taken: %lu micro seconds\n", duration);
+    printf("Speed (Mbps): %.2f\n", *speed);
+    puts("");
+    */
+
+    // Release
+    free(buffer);
+
+    // Validate
+    return speed > 0;
+}
+
+// Recv data (or file)
+bool recvFile(const int clientSocket) {
+    // Receive data
+    char buffer[DATA_SIZE + 1];
+    ssize_t bytesRead, totalRead;
+    while ( (bytesRead = recv(clientSocket, buffer, DATA_SIZE + 1, 0)) > 0) {
+        totalRead += bytesRead;
+        if ('V' == buffer[bytesRead - 1]) {
+            break;
+        }
+        // %.*s: *用来指定宽度，对应一个整数。
+        //（点）与后面的数合起来是指定必须输出这个宽度，
+        // 如果所输出的字符串长度大于这个数，则按此宽度输出，如果小于，则输出實際長度
+        //printf("recv: %.*s\n", (int)bytesRead, buffer);
+    }
+    if (bytesRead < 0) {
+        parseErrno();
+        return false;
+    }
+    buffer[totalRead] = '\0';
+    
+    printf("Received %zd bytes\n\n", totalRead);    
+
+    // Send ASK
+    const char* ack_data = "ACK";
+    send(clientSocket, ack_data, strlen(ack_data), 0);
+    
+    return true;
+}
