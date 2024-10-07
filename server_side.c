@@ -9,13 +9,11 @@
 #include <arpa/inet.h> // for socket
 #include <errno.h> // for socket tracebility
 
-#include <signal.h> // for timeout
-#include <semaphore.h> // for timeout
-
 #include "functions.h"
 
 #define PORT 8080 // Port
 #define MAX_CONNECTIONS 9 // Max 9 connection
+#define TIME_OUT 10 // second
 
 //
 // Server side
@@ -77,14 +75,20 @@ void *createServer(void *arg) {
 
     printf("Server side listening on port %d\n\n", PORT);
 
-    // Accept incoming connections and create a thread for each client
     int que = 0;
     int clientSocket[MAX_CONNECTIONS];
     while (1) {
+        // Set timeout
+        struct timeval timeout;
+        timeout.tv_sec = TIME_OUT;
+        timeout.tv_usec = 0;
+        setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+        // Accept incoming connections and create a thread for each client
         clientSocket[que] = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
         if (clientSocket[que] < 0) {
             perror("Error: Server side accept failed");
-            continue;
+            break;
         }
 
         // Retrieve and print the client's IP address
@@ -115,15 +119,6 @@ void *createServer(void *arg) {
 }
 
 //
-// Time out or Crtl+C or Kill
-//
-
-sem_t timeout;
-void stop_signal(int signum) {
-    sem_post(&timeout);
-}
-
-//
 // Main
 //
 
@@ -133,21 +128,11 @@ int main()
     pthread_t tid;
     if (pthread_create(&tid, NULL, createServer, NULL) != 0) {
         perror("Error: Could not create Server side");
+        pthread_cancel(tid);
         exit(EXIT_FAILURE);
     }
-    
-    // Register the timeout handler for SIGALRM signal
-    signal(SIGALRM, stop_signal);
-    alarm(60); // Set a timeout of 60 seconds
-    // Register crtl+C or kill
-    signal(SIGINT, stop_signal);
-    signal(SIGTERM, stop_signal);
-    // Wait for time out signal
-    sem_init(&timeout, 0, 0);
-    sem_wait(&timeout);
-    
+        
     // Join thread
-    pthread_cancel(tid);
     pthread_join(tid, NULL);
     
    return EXIT_SUCCESS;
