@@ -25,6 +25,9 @@ void *handleClient(void *arg) {
     int clientSocket = *((int *)arg);
     
     // Respond to ping test
+    if ( false == pingResponse(clientSocket) ) {
+        pthread_exit(NULL);
+    }
 
     // Handle upload from client 
     

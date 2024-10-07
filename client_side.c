@@ -22,6 +22,9 @@ void *requestServer(void *arg) {
     
     // Proceed ping test
     double averageLatency;
+    if ( false == pingRequest(clientSocket, &averageLatency) ) {
+        pthread_exit(NULL);
+    }
 
     // Proceed upload to server
     double uploadSpeed = 0.0;

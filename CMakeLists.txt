@@ -17,8 +17,8 @@ include_directories(hello_client PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 # Executable
-add_executable(client_side ${CMAKE_CURRENT_SOURCE_DIR}/client_side.cpp)
-add_executable(server_side ${CMAKE_CURRENT_SOURCE_DIR}/server_side.cpp)
+add_executable(client_side ${CMAKE_CURRENT_SOURCE_DIR}/client_side.c)
+add_executable(server_side ${CMAKE_CURRENT_SOURCE_DIR}/server_side.c)
 # Additional flags
 add_compile_options(
   -Wall -Wextra
