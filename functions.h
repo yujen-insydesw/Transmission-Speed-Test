@@ -141,8 +141,6 @@ bool sendFile(const int clientSocket, double* speed) {
         return false;
     }
 
-    printf("Send %zd bytes\n\n", bytesSend);
-
     // Wait for ASK
     char* ack_buffer = (char*)malloc(4);
     if ( recv(clientSocket, ack_buffer, 4, 0) < 0 ) {
@@ -157,11 +155,6 @@ bool sendFile(const int clientSocket, double* speed) {
     // Caculate speed
     long unsigned duration = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
     *speed = calculateTransferSpeed(bytesSend, duration);
-    /*
-    printf("Total time taken: %lu micro seconds\n", duration);
-    printf("Speed (Mbps): %.2f\n", *speed);
-    puts("");
-    */
 
     // Release
     free(buffer);
@@ -180,18 +173,12 @@ bool recvFile(const int clientSocket) {
         if ('V' == buffer[bytesRead - 1]) {
             break;
         }
-        // %.*s: *用来指定宽度，对应一个整数。
-        //（点）与后面的数合起来是指定必须输出这个宽度，
-        // 如果所输出的字符串长度大于这个数，则按此宽度输出，如果小于，则输出實際長度
-        //printf("recv: %.*s\n", (int)bytesRead, buffer);
     }
     if (bytesRead < 0) {
         parseErrno();
         return false;
     }
     buffer[totalRead] = '\0';
-    
-    printf("Received %zd bytes\n\n", totalRead);    
 
     // Send ASK
     const char* ack_data = "ACK";

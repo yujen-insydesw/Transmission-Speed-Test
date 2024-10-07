@@ -30,7 +30,10 @@ void *handleClient(void *arg) {
     }
 
     // Handle upload from client 
-    
+    if ( false == recvFile(clientSocket) ) {
+        pthread_exit(NULL);
+    }
+        
     // Proceed download to client
     
     // Send download speed

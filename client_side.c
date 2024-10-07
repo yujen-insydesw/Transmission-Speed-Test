@@ -28,6 +28,9 @@ void *requestServer(void *arg) {
 
     // Proceed upload to server
     double uploadSpeed = 0.0;
+    if ( false == sendFile(clientSocket, &uploadSpeed) ) {
+        pthread_exit(NULL);
+    }
         
     // Handle download from server
     
